@@ -2,19 +2,19 @@
 #include "UART.h"
 #include "stm32f4xx.h"
 
-extern volatile uint32_t gExecution;
+extern volatile uint32_t state_machine;
 extern volatile uint32_t gI2cTimeout;
 extern volatile uint32_t rx_count;
 
-volatile uint32_t timeOutMode;
+static volatile uint32_t timeout_mode;
 
 void TIM7_IRQHandler(void)
 {
     if (TIM7->SR) {
         TIM7->SR &= ~(0x0001); /* clear interrupt flag */
-        switch (timeOutMode) {
+        switch (timeout_mode) {
         case UART_TIMEOUT_MODE:
-            gExecution = IDLE;
+            state_machine = IDLE;
             break;
         case I2C_TIMEOUT_MODE:
             gI2cTimeout = 1;
@@ -36,10 +36,10 @@ void TIM7_IRQHandler(void)
 ** Returned value:	None
 **
 ******************************************************************************/
-void EnableTimer7(void)
+void EnableTimer7(uint32_t mode)
 {
     TIM7->CR1 = 1;
-    return;
+    timeout_mode = mode;
 }
 
 /******************************************************************************

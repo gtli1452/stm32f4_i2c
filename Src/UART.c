@@ -3,8 +3,7 @@
 #include "TIMER7.h"
 #include "stm32f4xx.h"
 
-extern volatile uint32_t gExecution;
-extern volatile uint32_t timeOutMode;
+extern volatile uint32_t state_machine;
 
 static volatile uint32_t rx_count;
 static volatile uint8_t ap_cmd;
@@ -17,33 +16,32 @@ void USART1_IRQHandler(void)
         if (rx_count == 0) {
             ap_cmd = USART1->DR;
             rx_count++;
-            timeOutMode = UART_TIMEOUT_MODE;
-            EnableTimer7();
+            EnableTimer7(UART_TIMEOUT_MODE);
         } else {
             switch (ap_cmd) {
             case 'a':  // write to IC registers
                 if (rx_count == 1)
-                    I2C_transaction.Index = USART1->DR;
+                    i2c.reg_addr = USART1->DR;
                 else if (rx_count == 2)
-                    I2C_transaction.DataLength = USART1->DR;
+                    i2c.data_length = USART1->DR;
                 else {
-                    I2C_transaction.Data[rx_count - 3] = USART1->DR;
-                    if (rx_count == (I2C_transaction.DataLength + 2))
-                        gExecution = WRITE_I2C;
+                    i2c.data[rx_count - 3] = USART1->DR;
+                    if (rx_count == (i2c.data_length + 2))
+                        state_machine = WRITE_I2C;
                 }
                 break;
             case 'b':  // read the IC internal registers
                 if (rx_count == 1)
-                    I2C_transaction.Index = USART1->DR;
+                    i2c.reg_addr = USART1->DR;
                 else {
-                    I2C_transaction.DataLength = USART1->DR;
-                    gExecution = READ_I2C;
+                    i2c.data_length = USART1->DR;
+                    state_machine = READ_I2C;
                 }
                 break;
             case 'e':  // set device address
                 if (rx_count == 1) {
-                    I2C_transaction.DeviceAddress = USART1->DR;
-                    gExecution = SET_ADDRESS;
+                    i2c.device_addr = USART1->DR;
+                    state_machine = SET_ADDRESS;
                 }
                 break;
             default:
@@ -54,7 +52,7 @@ void USART1_IRQHandler(void)
     }
 
     /* received all data */
-    if (gExecution != IDLE) {
+    if (state_machine != IDLE) {
         ap_cmd = 0;
         rx_count = 0;
         DisableTimer7();
