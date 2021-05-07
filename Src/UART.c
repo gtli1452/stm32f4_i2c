@@ -3,20 +3,14 @@
 #include "I2C.h"
 #include "TIMER7.h"
 
-volatile uint32_t gU32UartReceiveCounter;
-volatile uint32_t gU32Execution;
-volatile uint8_t gU8ModeSelection;
-volatile uint8_t gU8Command;
-volatile uint32_t gU32Timer7TimeOutMode;
+volatile uint32_t gUartReceiveCounter;
+volatile uint32_t gExecution;
+volatile uint8_t gCommand;
+volatile uint32_t gTimer7TimeOutMode;
 
-extern volatile uint32_t gU32HasExeOnce;
-extern volatile uint32_t gU32I2cTimeout;
-volatile uint32_t gU32Timer7TimeOutMode;
+extern volatile uint32_t gHasExeOnce;
+extern volatile uint32_t gI2cTimeout;
 extern volatile uint32_t counter;
-volatile uint8_t dataflag;
-volatile uint8_t indexflag;
-volatile uint8_t ackflag;
-volatile uint8_t ackflag2;
 
 #define SCL_HIGH GPIOB->ODR |= (1<<0)
 #define SCL_LOW GPIOB->ODR &= ~(1<<0)
@@ -26,77 +20,69 @@ volatile uint8_t ackflag2;
 void USART1_IRQHandler(void)
 {
 	volatile uint32_t status;
-	//uint8_t temp = 0x55;
-	//UARTSend(&temp, 1);
+
 	while(((status = USART1->SR)&USART_SR_RXNE)==USART_SR_RXNE)             /* read interrupt                   */
 	{
 		USART1->SR &= ~USART_SR_RXNE;//clear interrupt
-		if(gU32UartReceiveCounter ==0)
+		if(gUartReceiveCounter ==0)
 		{				     
-			gU8Command = USART1->DR;
-			gU32UartReceiveCounter++;
+			gCommand = USART1->DR;
+			gUartReceiveCounter++;
 			EnableTimer7();
-			gU32Timer7TimeOutMode = UART_TIMEOUT_MODE;
+			gTimer7TimeOutMode = UART_TIMEOUT_MODE;
 		}
 		else
 		{
-			switch(gU8Command)
+			switch(gCommand)
 			{
 				case 'a' :  //write to IC registers
 									SDA_HIGH;
 									SCL_HIGH;
-									dataflag=1;
-									indexflag=1;
-									ackflag=1;
-									ackflag2=1;
-									if(gU32UartReceiveCounter == 1)  
-										I2C_transaction.U8Index = USART1->DR;
-									else if(gU32UartReceiveCounter == 2)  
-										I2C_transaction.U32DataLength = USART1->DR; 
-									else if(gU32UartReceiveCounter>2)
+									if(gUartReceiveCounter == 1)  
+										I2C_transaction.Index = USART1->DR;
+									else if(gUartReceiveCounter == 2)  
+										I2C_transaction.DataLength = USART1->DR; 
+									else if(gUartReceiveCounter>2)
 									{
-										I2C_transaction.U8Data[gU32UartReceiveCounter-3] = USART1->DR;
-										if(gU32UartReceiveCounter==(I2C_transaction.U32DataLength+2))
+										I2C_transaction.Data[gUartReceiveCounter-3] = USART1->DR;
+										if(gUartReceiveCounter==(I2C_transaction.DataLength+2))
 								    {
-											gU32Execution= WRITE_I2C;
+											gExecution= WRITE_I2C;
 											DisableTimer7();
 								    }																				
 									}
 					break;
 					case 'b' : 	//read the IC internal registers
 
-									if(gU32UartReceiveCounter == 1)  
-										I2C_transaction.U8Index = USART1->DR;
-									else if(gU32UartReceiveCounter == 2)
+									if(gUartReceiveCounter == 1)  
+										I2C_transaction.Index = USART1->DR;
+									else if(gUartReceiveCounter == 2)
 									{
- 										//if(gU32UartReceiveCounter==(I2C_transaction.U32DataLength+2))
- 										//{
-											I2C_transaction.U32DataLength = USART1->DR;
-											gU32Execution= READ_I2C;
+											I2C_transaction.DataLength = USART1->DR;
+											gExecution= READ_I2C;
 											DisableTimer7();
- 										//}
 									}
 					break;		
 									
 						 case 'e' : //Set Device address	         
-									if(gU32UartReceiveCounter == 1)
+									if(gUartReceiveCounter == 1)
 									{	
-										I2C_transaction.U8DeviceAddress = USART1->DR;
-										gU32Execution= SET_ADDRESS;
+										I2C_transaction.DeviceAddress = USART1->DR;
+										gExecution= SET_ADDRESS;
 										DisableTimer7();
 									}
 						  break;
 									
 						case 'x' : //writeread to IC registers
-							if(gU32UartReceiveCounter == 1)  
-								I2C_transaction.U8Index = USART1->DR;
-              else if(gU32UartReceiveCounter == 2)  
-								I2C_transaction.U32DataLength = USART1->DR;
-              else if(gU32UartReceiveCounter>2)
+							if(gUartReceiveCounter == 1)  
+								I2C_transaction.Index = USART1->DR;
+              else if(gUartReceiveCounter == 2)  
+								I2C_transaction.DataLength = USART1->DR;
+              else if(gUartReceiveCounter>2)
 							{
-								I2C_transaction.U8Data[gU32UartReceiveCounter-3] = USART1->DR;
+								I2C_transaction.Data[gUartReceiveCounter-3] = USART1->DR;
 							
-									gU32Execution= WRITE_READ_I2C;
+									gExecution= WRITE_READ_I2C;
 									DisableTimer7();								
 							}						
 						break;
@@ -104,7 +90,7 @@ void USART1_IRQHandler(void)
             default:	 
 						break;							
  			}	
-				gU32UartReceiveCounter++;			
+				gUartReceiveCounter++;			
 		}
 	}
 }	
@@ -146,14 +132,14 @@ void UartInitial(void)
   
 }
 
-void UARTSend(uint8_t *pU8Buffer, uint32_t U32Length)
+void UARTSend(uint8_t *pBuffer, uint32_t Length)
 {	
-  while(U32Length != 0 )
+  while(Length != 0 )
   {	
     while ( !(USART1->SR & USART_SR_TXE));
-		USART1->DR = *pU8Buffer;
-    pU8Buffer++;
-    U32Length--;
+		USART1->DR = *pBuffer;
+    pBuffer++;
+    Length--;
   }
   return;
 }

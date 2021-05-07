@@ -2,13 +2,9 @@
 #include "stm32f4xx.h"
 
 volatile I2C_transaction_TypeDef I2C_transaction;
-volatile uint32_t gU32HasExeOnce;
-volatile uint32_t gU32I2cTimeout;
-volatile uint32_t gU32Timer16B0TimeOutMode;
-volatile uint32_t counter;
+volatile uint32_t gHasExeOnce;
+volatile uint32_t gI2cTimeout;
 volatile uint32_t testflag;
-extern volatile uint8_t dataflag;
-extern volatile uint8_t indexflag;
 
 /* this handler deals with master read and master write only */
 	
@@ -44,12 +40,12 @@ void NopCycle(int max)
 
 
 /* SM transmit byte */ 
-void I2cTxByte(uint8_t U8I2cTxByte)
+void I2cTxByte(uint8_t I2cTxByte)
 {
 	uint8_t i = 0;
 	uint8_t a = 0;
 	
-	a = U8I2cTxByte;
+	a = I2cTxByte;
 	
 	for(i = 0; i < 8; i++)
 	{		
@@ -225,15 +221,15 @@ void MasterStart(void)
 }
 
 /* write data to IC */
-uint8_t WriteIc(uint8_t U8DeviceAddress, uint8_t U8IndexAddress, uint8_t U8RegisterAmount, uint8_t* pU8Data)
+uint8_t WriteIc(uint8_t DeviceAddress, uint8_t IndexAddress, uint8_t RegisterAmount, uint8_t* pData)
 {
-		uint8_t U8Temp1;
+		uint8_t Temp1;
 		//start
 		MasterStart();
 
 		//device address
 		testflag=1;
-		I2cTxByte(U8DeviceAddress);
+		I2cTxByte(DeviceAddress);
 		testflag=0;
 
 		if(SlaveAck())
@@ -243,7 +239,7 @@ uint8_t WriteIc(uint8_t U8DeviceAddress, uint8_t U8IndexAddress, uint8_t U8Regis
 			return 0x01;
 		}
 
-		if(U8RegisterAmount==0)
+		if(RegisterAmount==0)
 		{
 			//stop
 			MasterStop();
@@ -251,7 +247,7 @@ uint8_t WriteIc(uint8_t U8DeviceAddress, uint8_t U8IndexAddress, uint8_t U8Regis
 		}
 
 		//index Address
-		I2cTxByte(U8IndexAddress);
+		I2cTxByte(IndexAddress);
 
 		if(SlaveAck())
 		{
@@ -261,9 +257,9 @@ uint8_t WriteIc(uint8_t U8DeviceAddress, uint8_t U8IndexAddress, uint8_t U8Regis
 		}
 
 		//writing data
-		for(U8Temp1=0; U8Temp1<U8RegisterAmount; U8Temp1++)
+		for(Temp1=0; Temp1<RegisterAmount; Temp1++)
 		{
-				I2cTxByte(*pU8Data);
+				I2cTxByte(*pData);
 				
 				if(SlaveAck())
 				{
@@ -271,7 +267,7 @@ uint8_t WriteIc(uint8_t U8DeviceAddress, uint8_t U8IndexAddress, uint8_t U8Regis
 						MasterStop();
 						return 0x01;
 				}
-				pU8Data++;
+				pData++;
 		}      
 		 
 		//stop
@@ -284,15 +280,15 @@ uint8_t WriteIc(uint8_t U8DeviceAddress, uint8_t U8IndexAddress, uint8_t U8Regis
 }
 
 /* Read data to IC */
-uint8_t ReadIc(uint8_t U8DeviceAddress, uint8_t U8IndexAddress, uint8_t U8RegisterAmount, uint8_t* pU8Data)
+uint8_t ReadIc(uint8_t DeviceAddress, uint8_t IndexAddress, uint8_t RegisterAmount, uint8_t* pData)
 {
-		uint8_t U8Temp1;
+		uint8_t Temp1;
 		
 		//start
 		MasterStart();
 	
 		//device address
-		I2cTxByte(U8DeviceAddress);
+		I2cTxByte(DeviceAddress);
 		if(SlaveAck())
 		{
 			//stop
@@ -300,7 +296,7 @@ uint8_t ReadIc(uint8_t U8DeviceAddress, uint8_t U8IndexAddress, uint8_t U8Regist
 			return 0x01;
 		}	 
 		 //index Address	
-		I2cTxByte(U8IndexAddress);
+		I2cTxByte(IndexAddress);
 
 		if(SlaveAck())
 		{
@@ -313,7 +309,7 @@ uint8_t ReadIc(uint8_t U8DeviceAddress, uint8_t U8IndexAddress, uint8_t U8Regist
 		MasterStart();
 
 		//device address
-		I2cTxByte(U8DeviceAddress | 0x01);
+		I2cTxByte(DeviceAddress | 0x01);
 		
 		if(SlaveAck())
 		{
@@ -322,15 +318,15 @@ uint8_t ReadIc(uint8_t U8DeviceAddress, uint8_t U8IndexAddress, uint8_t U8Regist
 			return 0x01;
 		}
 		
-		for(U8Temp1=0; U8Temp1<(U8RegisterAmount-1); U8Temp1++)
+		for(Temp1=0; Temp1<(RegisterAmount-1); Temp1++)
 		{
-			 *pU8Data = I2cRxByte();
+			 *pData = I2cRxByte();
 			 MasterAck();
-			 pU8Data++;          
+			 pData++;          
 		}   
 		 
 		//the last byte
-		*pU8Data = I2cRxByte();      
+		*pData = I2cRxByte();      
 		
 		//No Ack
 /*		SCL_LOW;

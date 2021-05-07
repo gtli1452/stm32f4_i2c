@@ -1,10 +1,9 @@
 #include "stm32f4xx.h"
 #include "TIMER7.h"
 
-extern volatile uint32_t gU32Execution;
-extern volatile uint32_t gU32UartReceiveCounter;
-extern volatile uint32_t gU32Timer7TimeOutMode;
-extern volatile uint32_t gU32I2cTimeout;
+extern volatile uint32_t gExecution;
+extern volatile uint32_t gTimer7TimeOutMode;
+extern volatile uint32_t gI2cTimeout;
 
   
  

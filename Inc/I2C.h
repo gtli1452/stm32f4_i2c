@@ -6,18 +6,18 @@
 
 typedef struct
 {
-	uint8_t U8I2cState;
-	uint8_t U8DeviceAddress;
-	uint8_t U8Index;
-	uint32_t U32RW;
-	uint32_t U32DataLength;
-	uint32_t U32DataCounter;
-	uint8_t U8Data[256];
+	uint8_t I2cState;
+	uint8_t DeviceAddress;
+	uint8_t Index;
+	uint32_t RW;
+	uint32_t DataLength;
+	uint32_t DataCounter;
+	uint8_t Data[256];
 	uint8_t caseitem;
 }I2C_transaction_TypeDef;
 
-extern uint8_t WriteIc(uint8_t U8DeviceAddress, uint8_t U8IndexAddress, uint8_t U8RegisterAmount, uint8_t* pU8Data);
-extern uint8_t ReadIc(uint8_t U8DeviceAddress, uint8_t U8IndexAddress, uint8_t U8RegisterAmount, uint8_t* pU8Data);
+extern uint8_t WriteIc(uint8_t DeviceAddress, uint8_t IndexAddress, uint8_t RegisterAmount, uint8_t* pData);
+extern uint8_t ReadIc(uint8_t DeviceAddress, uint8_t IndexAddress, uint8_t RegisterAmount, uint8_t* pData);
 
 #define coreClock 48000000
 #define I2CONSET_I2EN       (0x1<<6)  /* I2C Control Set Register */

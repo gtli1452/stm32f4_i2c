@@ -6,7 +6,7 @@
 
 extern void UART_IRQHandler(void);
 extern void UartInitial(void);
-void UARTSend(uint8_t *pU8Buffer, uint32_t U32Length);
+void UARTSend(uint8_t *pBuffer, uint32_t Length);
 
 #define IDLE               0
 #define SET_ADDRESS        1

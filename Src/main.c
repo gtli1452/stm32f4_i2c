@@ -44,9 +44,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-extern volatile uint32_t gU32Execution;
-extern volatile uint32_t gU32UartReceiveCounter;
-extern volatile uint8_t gU8ModeSelection;
+extern volatile uint32_t gExecution;
+extern volatile uint32_t gUartReceiveCounter;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -68,7 +67,7 @@ uint32_t sysClk;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	uint8_t U8Echo;
+	uint8_t Echo;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -79,8 +78,8 @@ int main(void)
   /* USER CODE BEGIN Init */
 	UartInitial();
 	InitialTimer7();
-	I2C_transaction.U8DeviceAddress = (0x48 << 1);
-	gU32Execution = IDLE;
+	I2C_transaction.DeviceAddress = (0x48 << 1);
+	gExecution = IDLE;
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -103,32 +102,32 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		switch(gU32Execution)
+		switch(gExecution)
 		{
 			case WRITE_I2C:
-											I2C_transaction.U32RW = 0;
-											U8Echo = WriteIc(I2C_transaction.U8DeviceAddress, I2C_transaction.U8Index, I2C_transaction.U32DataLength, (uint8_t*)I2C_transaction.U8Data);
-											UARTSend(&U8Echo, 1);	 
-			                gU32Execution = IDLE;
-											gU32UartReceiveCounter = 0;			
+											I2C_transaction.RW = 0;
+											Echo = WriteIc(I2C_transaction.DeviceAddress, I2C_transaction.Index, I2C_transaction.DataLength, (uint8_t*)I2C_transaction.Data);
+											UARTSend(&Echo, 1);	 
+			                gExecution = IDLE;
+											gUartReceiveCounter = 0;			
 											break;
 			case READ_I2C:
-											I2C_transaction.U32RW = 1;											
-											U8Echo = ReadIc(I2C_transaction.U8DeviceAddress, I2C_transaction.U8Index, I2C_transaction.U32DataLength, (uint8_t*)I2C_transaction.U8Data);
-											UARTSend(&U8Echo, 1);
-											if(U8Echo==0x00)
+											I2C_transaction.RW = 1;											
+											Echo = ReadIc(I2C_transaction.DeviceAddress, I2C_transaction.Index, I2C_transaction.DataLength, (uint8_t*)I2C_transaction.Data);
+											UARTSend(&Echo, 1);
+											if(Echo==0x00)
 											{
-												UARTSend((uint8_t*)I2C_transaction.U8Data, I2C_transaction.U32DataLength);
+												UARTSend((uint8_t*)I2C_transaction.Data, I2C_transaction.DataLength);
 											}
-											gU32Execution = IDLE;
-											gU32UartReceiveCounter = 0;
+											gExecution = IDLE;
+											gUartReceiveCounter = 0;
 										break;
 											
 			case SET_ADDRESS:
-											U8Echo = 0;
-											UARTSend(&U8Echo, 1);
-											gU32Execution = IDLE;
-											gU32UartReceiveCounter = 0;
+											Echo = 0;
+											UARTSend(&Echo, 1);
+											gExecution = IDLE;
+											gUartReceiveCounter = 0;
 										break;
 			default:	
 				break;
@@ -208,7 +207,7 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin : SDA_Pin */
   GPIO_InitStruct.Pin = SDA_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(SDA_GPIO_Port, &GPIO_InitStruct);
 
