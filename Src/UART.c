@@ -3,65 +3,63 @@
 #include "TIMER7.h"
 #include "stm32f4xx.h"
 
-volatile uint32_t UartRxDataCounter;
-volatile uint32_t gExecution;
-volatile uint8_t gCommand;
-volatile uint32_t gTimer7TimeOutMode;
+extern volatile uint32_t gExecution;
+extern volatile uint32_t timeOutMode;
 
-#define SCL_HIGH GPIOB->ODR |= (1 << 0)
-#define SCL_LOW GPIOB->ODR &= ~(1 << 0)
-#define SDA_HIGH GPIOB->ODR |= (1 << 1)
-#define SDA_LOW GPIOB->ODR &= ~(1 << 1)
+static volatile uint32_t rx_count;
+static volatile uint8_t ap_cmd;
 
 void USART1_IRQHandler(void)
 {
-    volatile uint32_t status = 0;
     /* read interrupt */
-    while (((status = USART1->SR) & USART_SR_RXNE) == USART_SR_RXNE) {
-        USART1->SR &= ~USART_SR_RXNE;  // clear interrupt
-        if (UartRxDataCounter == 0) {
-            gCommand = USART1->DR;
-            UartRxDataCounter++;
+    while (USART1->SR & USART_SR_RXNE) {
+        USART1->SR &= ~USART_SR_RXNE; /* clear interrupt */
+        if (rx_count == 0) {
+            ap_cmd = USART1->DR;
+            rx_count++;
+            timeOutMode = UART_TIMEOUT_MODE;
             EnableTimer7();
-            gTimer7TimeOutMode = UART_TIMEOUT_MODE;
         } else {
-            switch (gCommand) {
+            switch (ap_cmd) {
             case 'a':  // write to IC registers
-                SDA_HIGH;
-                SCL_HIGH;
-                if (UartRxDataCounter == 1)
+                if (rx_count == 1)
                     I2C_transaction.Index = USART1->DR;
-                else if (UartRxDataCounter == 2)
+                else if (rx_count == 2)
                     I2C_transaction.DataLength = USART1->DR;
-                else if (UartRxDataCounter > 2) {
-                    I2C_transaction.Data[UartRxDataCounter - 3] = USART1->DR;
-                    if (UartRxDataCounter == (I2C_transaction.DataLength + 2)) {
+                else {
+                    I2C_transaction.Data[rx_count - 3] = USART1->DR;
+                    if (rx_count == (I2C_transaction.DataLength + 2))
                         gExecution = WRITE_I2C;
-                        DisableTimer7();
-                    }
                 }
                 break;
             case 'b':  // read the IC internal registers
-                if (UartRxDataCounter == 1)
+                if (rx_count == 1)
                     I2C_transaction.Index = USART1->DR;
-                else if (UartRxDataCounter == 2) {
+                else {
                     I2C_transaction.DataLength = USART1->DR;
                     gExecution = READ_I2C;
-                    DisableTimer7();
                 }
                 break;
-            case 'e':  // Set Device address
-                if (UartRxDataCounter == 1) {
+            case 'e':  // set device address
+                if (rx_count == 1) {
                     I2C_transaction.DeviceAddress = USART1->DR;
                     gExecution = SET_ADDRESS;
-                    DisableTimer7();
                 }
                 break;
             default:
                 break;
             }
-            UartRxDataCounter++;
+            rx_count++;
         }
+    }
+
+    /* received all data */
+    if (gExecution != IDLE) {
+        ap_cmd = 0;
+        rx_count = 0;
+        DisableTimer7();
+    } else {
+
     }
 }
 

@@ -44,8 +44,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-extern volatile uint32_t gExecution;
-extern volatile uint32_t UartRxDataCounter;
+volatile uint32_t gExecution;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -110,7 +109,6 @@ int main(void)
                        (uint8_t *) I2C_transaction.Data);
         UARTSend(&Echo, 1);
         gExecution = IDLE;
-        UartRxDataCounter = 0;
         break;
     case READ_I2C:
         I2C_transaction.RW = 1;
@@ -123,14 +121,12 @@ int main(void)
                      I2C_transaction.DataLength);
         }
         gExecution = IDLE;
-        UartRxDataCounter = 0;
         break;
 
     case SET_ADDRESS:
         Echo = 0;
         UARTSend(&Echo, 1);
         gExecution = IDLE;
-        UartRxDataCounter = 0;
         break;
     default:
         break;
