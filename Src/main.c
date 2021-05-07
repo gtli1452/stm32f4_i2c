@@ -45,7 +45,7 @@
 
 /* USER CODE BEGIN PV */
 extern volatile uint32_t gExecution;
-extern volatile uint32_t gUartReceiveCounter;
+extern volatile uint32_t UartRxDataCounter;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -102,36 +102,39 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		switch(gExecution)
-		{
-			case WRITE_I2C:
-											I2C_transaction.RW = 0;
-											Echo = WriteIc(I2C_transaction.DeviceAddress, I2C_transaction.Index, I2C_transaction.DataLength, (uint8_t*)I2C_transaction.Data);
-											UARTSend(&Echo, 1);	 
-			                gExecution = IDLE;
-											gUartReceiveCounter = 0;			
-											break;
-			case READ_I2C:
-											I2C_transaction.RW = 1;											
-											Echo = ReadIc(I2C_transaction.DeviceAddress, I2C_transaction.Index, I2C_transaction.DataLength, (uint8_t*)I2C_transaction.Data);
-											UARTSend(&Echo, 1);
-											if(Echo==0x00)
-											{
-												UARTSend((uint8_t*)I2C_transaction.Data, I2C_transaction.DataLength);
-											}
-											gExecution = IDLE;
-											gUartReceiveCounter = 0;
-										break;
-											
-			case SET_ADDRESS:
-											Echo = 0;
-											UARTSend(&Echo, 1);
-											gExecution = IDLE;
-											gUartReceiveCounter = 0;
-										break;
-			default:	
-				break;
-		}
+    switch (gExecution) {
+    case WRITE_I2C:
+        I2C_transaction.RW = 0;
+        Echo = WriteIc(I2C_transaction.DeviceAddress, I2C_transaction.Index,
+                       I2C_transaction.DataLength,
+                       (uint8_t *) I2C_transaction.Data);
+        UARTSend(&Echo, 1);
+        gExecution = IDLE;
+        UartRxDataCounter = 0;
+        break;
+    case READ_I2C:
+        I2C_transaction.RW = 1;
+        Echo = ReadIc(I2C_transaction.DeviceAddress, I2C_transaction.Index,
+                      I2C_transaction.DataLength,
+                      (uint8_t *) I2C_transaction.Data);
+        UARTSend(&Echo, 1);
+        if (Echo == 0x00) {
+            UARTSend((uint8_t *) I2C_transaction.Data,
+                     I2C_transaction.DataLength);
+        }
+        gExecution = IDLE;
+        UartRxDataCounter = 0;
+        break;
+
+    case SET_ADDRESS:
+        Echo = 0;
+        UARTSend(&Echo, 1);
+        gExecution = IDLE;
+        UartRxDataCounter = 0;
+        break;
+    default:
+        break;
+    }
   }
   /* USER CODE END 3 */
 }
