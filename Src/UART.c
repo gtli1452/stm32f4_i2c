@@ -3,6 +3,9 @@
 #include "TIMER7.h"
 #include "stm32f4xx.h"
 
+#define rx_data USART1->DR
+#define tx_data USART1->DR
+
 extern volatile uint32_t state_machine;
 
 static volatile uint32_t rx_count;
@@ -14,33 +17,33 @@ void USART1_IRQHandler(void)
     while (USART1->SR & USART_SR_RXNE) {
         USART1->SR &= ~USART_SR_RXNE; /* clear interrupt */
         if (rx_count == 0) {
-            ap_cmd = USART1->DR;
+            ap_cmd = rx_data;
             rx_count++;
             EnableTimer7(UART_TIMEOUT_MODE);
         } else {
             switch (ap_cmd) {
             case 'a':  // write to IC registers
                 if (rx_count == 1)
-                    i2c.reg_addr = USART1->DR;
+                    i2c.reg_addr = rx_data;
                 else if (rx_count == 2)
-                    i2c.data_length = USART1->DR;
+                    i2c.data_length = rx_data;
                 else {
-                    i2c.data[rx_count - 3] = USART1->DR;
+                    i2c.data[rx_count - 3] = rx_data;
                     if (rx_count == (i2c.data_length + 2))
                         state_machine = WRITE_I2C;
                 }
                 break;
             case 'b':  // read the IC internal registers
                 if (rx_count == 1)
-                    i2c.reg_addr = USART1->DR;
+                    i2c.reg_addr = rx_data;
                 else {
-                    i2c.data_length = USART1->DR;
+                    i2c.data_length = rx_data;
                     state_machine = READ_I2C;
                 }
                 break;
             case 'e':  // set device address
                 if (rx_count == 1) {
-                    i2c.device_addr = USART1->DR;
+                    i2c.device_addr = rx_data;
                     state_machine = SET_ADDRESS;
                 }
                 break;
@@ -105,7 +108,7 @@ void UARTSend(uint8_t *pBuffer, uint32_t Length)
     while (Length != 0) {
         while (!(USART1->SR & USART_SR_TXE))
             ;
-        USART1->DR = *pBuffer;
+        tx_data = *pBuffer;
         pBuffer++;
         Length--;
     }
