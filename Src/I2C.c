@@ -55,8 +55,8 @@ void I2cTxByte(uint8_t I2cTxByte)
             SDA_LOW;
         a = a << 1;
         nop();
-        SCL_HIGH;
 
+        SCL_HIGH;
         nop();
 
         /*spike
@@ -80,65 +80,18 @@ void I2cTxByte(uint8_t I2cTxByte)
 uint8_t I2cRxByte(void)
 {
     uint8_t bI2cRxByte = 0;
-
-    SDA_HIGH;
+    SCL_LOW;
     GPIOB->MODER &= ~((3UL << 2 * 1));  // set PB1 input to receive data
-
-    SCL_LOW;  // bit8
-    nop();
-    if (SDA)
-        bI2cRxByte = bI2cRxByte | 0x80;
-    SCL_HIGH;
     nop();
 
-    SCL_LOW;  // bit7
-    nop();
-    if (SDA)
-        bI2cRxByte = bI2cRxByte | 0x40;
-    SCL_HIGH;
-    nop();
-
-    SCL_LOW;  // bit6
-    nop();
-    if (SDA)
-        bI2cRxByte = bI2cRxByte | 0x20;
-    SCL_HIGH;
-    nop();
-
-    SCL_LOW;  // bit5
-    nop();
-    if (SDA)
-        bI2cRxByte = bI2cRxByte | 0x10;
-    SCL_HIGH;
-    nop();
-
-    SCL_LOW;  // bit4
-    nop();
-    if (SDA)
-        bI2cRxByte = bI2cRxByte | 0x8;
-    SCL_HIGH;
-    nop();
-
-    SCL_LOW;  // bit3
-    nop();
-    if (SDA)
-        bI2cRxByte = bI2cRxByte | 0x4;
-    SCL_HIGH;
-    nop();
-
-    SCL_LOW;  // bit2
-    nop();
-    if (SDA)
-        bI2cRxByte = bI2cRxByte | 0x2;
-    SCL_HIGH;
-    nop();
-
-    SCL_LOW;  // bit1
-    nop();
-    if (SDA)
-        bI2cRxByte = bI2cRxByte | 0x1;
-    SCL_HIGH;
-    nop();
+    for (int i = 7; i >= 0; i--) {
+        SCL_LOW;
+        nop();
+        if (SDA)
+            bI2cRxByte = bI2cRxByte | (1 << i);
+        SCL_HIGH;
+        nop();
+    }
 
     SDA_HIGH;
     GPIOB->MODER |= (1UL << 2 * 1);  // set PB1 output
@@ -150,7 +103,7 @@ uint8_t I2cRxByte(void)
 uint8_t SlaveAck(void)
 {
     SCL_LOW;
-    // SDA_HIGH;
+
     GPIOB->MODER &= ~((3UL << 2 * 1));  // set PB1 input
     nop();
 
@@ -176,18 +129,27 @@ uint8_t SlaveAck(void)
 void MasterAck(void)
 {
     SCL_LOW;
-    __nop();
-    __nop();
-    __nop();
-    __nop();
-
     SDA_LOW;
+    //GPIOB->MODER |= (1UL << 2 * 1);  // set PB1 output
     nop();
+
     SCL_HIGH;
     nop();
 }
 
-/* master stop*/
+/* master no ack */
+void MasterNAck()
+{
+    SCL_LOW;
+    SDA_HIGH;
+    //GPIOB->MODER |= (1UL << 2 * 1);  // set PB1 output
+    nop();
+
+    SCL_HIGH;
+    nop();
+}
+
+/* master stop */
 void MasterStop(void)
 {
     SCL_LOW;
@@ -200,6 +162,7 @@ void MasterStop(void)
     SDA_HIGH;
 }
 
+/* master */
 void MasterStart(void)
 {
     SDA_HIGH;
@@ -290,6 +253,7 @@ uint8_t ReadIc(uint8_t DeviceAddress,
         MasterStop();
         return 0x01;
     }
+    
     // index Address
     I2cTxByte(IndexAddress);
 
@@ -311,34 +275,20 @@ uint8_t ReadIc(uint8_t DeviceAddress,
         return 0x01;
     }
 
-    for (Temp1 = 0; Temp1 < (RegisterAmount - 1); Temp1++) {
+    for (Temp1 = 0; Temp1 < RegisterAmount; Temp1++) {
         *pData = I2cRxByte();
-        MasterAck();
+        if (Temp1 == RegisterAmount - 1)
+            MasterNAck();
+        else
+            MasterAck();
         pData++;
     }
 
     // the last byte
-    *pData = I2cRxByte();
+    //*pData = I2cRxByte();
 
-    // No Ack
-    /*		SCL_LOW;
-            nop();
-            SDA_HIGH;
-            nop();
-            SCL_HIGH;
-            nop();
-            SCL_LOW;
-            nop();
-            SDA_LOW;
-            nop();
-    */
     // Master no ack
-    SCL_LOW;
-    SDA_HIGH;
-    nop();
-
-    SCL_HIGH;
-    nop();
+    //MasterNAck();
 
     // stop
     MasterStop();
