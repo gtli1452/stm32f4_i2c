@@ -1,4 +1,4 @@
-#include "I2C.h"
+#include "i2c.h"
 #include "stm32f4xx.h"
 
 volatile I2C_transaction_TypeDef i2c;

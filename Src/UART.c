@@ -1,6 +1,6 @@
-#include "UART.h"
-#include "I2C.h"
-#include "TIMER7.h"
+#include "uart.h"
+#include "i2c.h"
+#include "timer7.h"
 #include "stm32f4xx.h"
 
 #define rx_data USART1->DR

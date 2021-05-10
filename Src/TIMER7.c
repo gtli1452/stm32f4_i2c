@@ -1,5 +1,5 @@
-#include "TIMER7.h"
-#include "UART.h"
+#include "timer7.h"
+#include "uart.h"
 #include "stm32f4xx.h"
 
 extern volatile uint32_t state_machine;
