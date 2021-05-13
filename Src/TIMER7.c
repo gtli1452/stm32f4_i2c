@@ -1,6 +1,6 @@
 #include "timer7.h"
-#include "uart.h"
 #include "stm32f4xx.h"
+#include "uart.h"
 
 extern volatile uint32_t state_machine;
 extern volatile uint32_t gI2cTimeout;
@@ -24,66 +24,26 @@ void TIM7_IRQHandler(void)
         }
     }
 
-    DisableTimer7();
+    disable_timer7();
 }
 
-/******************************************************************************
-** Function name:		EnableTimer16B0
-**
-** Descriptions:		Enable timer
-**
-** parameters:		None
-** Returned value:	None
-**
-******************************************************************************/
-void EnableTimer7(uint32_t mode)
+void enable_timer7(uint32_t mode)
 {
     TIM7->CR1 = 1;
     timeout_mode = mode;
 }
 
-/******************************************************************************
-** Function name:		DisableTimer16B0
-**
-** Descriptions:		Disable timer
-**
-** parameters:		None
-** Returned value:	None
-**
-******************************************************************************/
-void DisableTimer7(void)
+void disable_timer7(void)
 {
     TIM7->CR1 = 0;
-    return;
 }
 
-/******************************************************************************
-** Function name:		ResetTimer16B0
-**
-** Descriptions:		Reset timer
-**
-** parameters:		None
-** Returned value:	None
-**
-******************************************************************************/
-void ResetTimer7(void)
+void reset_timer7(void)
 {
     TIM7->CNT = 0;
-    return;
 }
 
-/******************************************************************************
-
-** Function name:		init_timer
-**
-** Descriptions:		Initialize timer, set timer interval, reset timer,
-**				install timer interrupt handler
-**
-** parameters:		timer number and timer interval
-** Returned value:	None
-**
-******************************************************************************/
-void InitialTimer7(void)
+void init_timer7(void)
 {
     SCB->AIRCR = 0x05AF0000 | 0x400;
     RCC->APB1ENR |= (1 << 5);  // enable timer7 clock
@@ -94,5 +54,4 @@ void InitialTimer7(void)
     TIM7->DIER |= (1 << 6);
     NVIC->IP[55] = 0x80;
     NVIC->ISER[1] |= (1 << (55 - 32));
-    return;
 }

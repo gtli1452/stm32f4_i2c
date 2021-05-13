@@ -22,9 +22,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "i2c.h"
 #include "timer7.h"
 #include "uart.h"
-#include "i2c.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -75,8 +75,8 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-	UartInitial();
-	InitialTimer7();
+	init_uart();
+	init_timer7();
 	i2c.device_addr = (0x48 << 1);
 	state_machine = IDLE;
   /* USER CODE END Init */
@@ -104,28 +104,25 @@ int main(void)
     switch (state_machine) {
     case WRITE_I2C:
         i2c.RW = 0;
-        echo = WriteIc(i2c.device_addr, i2c.reg_addr,
-                       i2c.data_length,
-                       (uint8_t *) i2c.data);
-        UARTSend(&echo, 1);
+        echo = write_i2c(i2c.device_addr, i2c.reg_addr, i2c.data_length,
+                         (uint8_t *) i2c.data);
+        write_uart(&echo, 1);
         state_machine = IDLE;
         break;
     case READ_I2C:
         i2c.RW = 1;
-        echo = ReadIc(i2c.device_addr, i2c.reg_addr,
-                      i2c.data_length,
-                      (uint8_t *) i2c.data);
-        UARTSend(&echo, 1);
+        echo = read_i2c(i2c.device_addr, i2c.reg_addr, i2c.data_length,
+                        (uint8_t *) i2c.data);
+        write_uart(&echo, 1);
         if (echo == 0x00) {
-            UARTSend((uint8_t *) i2c.data,
-                     i2c.data_length);
+            write_uart((uint8_t *) i2c.data, i2c.data_length);
         }
         state_machine = IDLE;
         break;
 
-    case SET_ADDRESS:
+    case SET_I2C_ADDR:
         echo = 0;
-        UARTSend(&echo, 1);
+        write_uart(&echo, 1);
         state_machine = IDLE;
         break;
     default:

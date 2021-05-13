@@ -1,7 +1,7 @@
 #include "uart.h"
 #include "i2c.h"
-#include "timer7.h"
 #include "stm32f4xx.h"
+#include "timer7.h"
 
 #define rx_data USART1->DR
 #define tx_data USART1->DR
@@ -11,6 +11,7 @@ extern volatile uint32_t state_machine;
 static volatile uint32_t rx_count;
 static volatile uint8_t ap_cmd;
 
+/* Unpack GUI tranmitted data */
 void USART1_IRQHandler(void)
 {
     /* read interrupt */
@@ -19,7 +20,7 @@ void USART1_IRQHandler(void)
         if (rx_count == 0) {
             ap_cmd = rx_data;
             rx_count++;
-            EnableTimer7(UART_TIMEOUT_MODE);
+            enable_timer7(UART_TIMEOUT_MODE);
         } else {
             switch (ap_cmd) {
             case 'a':  // write to IC registers
@@ -44,7 +45,7 @@ void USART1_IRQHandler(void)
             case 'e':  // set device address
                 if (rx_count == 1) {
                     i2c.device_addr = rx_data;
-                    state_machine = SET_ADDRESS;
+                    state_machine = SET_I2C_ADDR;
                 }
                 break;
             default:
@@ -58,13 +59,12 @@ void USART1_IRQHandler(void)
     if (state_machine != IDLE) {
         ap_cmd = 0;
         rx_count = 0;
-        DisableTimer7();
+        disable_timer7();
     } else {
-
     }
 }
 
-void UartInitial(void)
+void init_uart(void)
 {
     /* Enable GPIOA clock */
     RCC->AHB1ENR |= (1UL << 0);
@@ -103,14 +103,14 @@ void UartInitial(void)
     NVIC_EnableIRQ(USART1_IRQn);
 }
 
-void UARTSend(uint8_t *pBuffer, uint32_t Length)
+void write_uart(uint8_t *pBuffer, uint32_t length)
 {
-    while (Length != 0) {
+    while (length != 0) {
         while (!(USART1->SR & USART_SR_TXE))
             ;
         tx_data = *pBuffer;
         pBuffer++;
-        Length--;
+        length--;
     }
     return;
 }

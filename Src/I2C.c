@@ -1,33 +1,33 @@
 #include "i2c.h"
 #include "stm32f4xx.h"
 
-volatile I2C_transaction_TypeDef i2c;
-volatile uint32_t gHasExeOnce;
-volatile uint32_t gI2cTimeout;
-
 /* this handler deals with master read and master write only */
 
-#define SCL_HIGH GPIOB->ODR |= (1 << 0)  // pb0
+/* PB0 */
+#define SCL_HIGH GPIOB->ODR |= (1 << 0)
 #define SCL_LOW GPIOB->ODR &= ~(1 << 0)
-#define SDA_HIGH GPIOB->ODR |= (1 << 1)  // pb1
+
+/* PB1 */
+#define SDA_HIGH GPIOB->ODR |= (1 << 1)
 #define SDA_LOW GPIOB->ODR &= ~(1 << 1)
-#define SET_SDA_INPUT GPIOB->MODER &= ~(3UL << (2 * 1))  // set PB1 input
-#define SET_SDA_OUTPUT GPIOB->MODER |= (1UL << (2 * 1))  // set PB1 output
+
+/* Configure PB1 input or output */
+#define SET_SDA_INPUT GPIOB->MODER &= ~(3UL << (2 * 1))
+#define SET_SDA_OUTPUT GPIOB->MODER |= (1UL << (2 * 1))
+
+/* Get PB1 input */
 #define SDA GPIOB->IDR & 0x02
 
-void nop(void)
+volatile i2c_packet_t i2c;
+volatile uint32_t gI2cTimeout;
+
+static void nop(void)
 {
     /*
      * __nop() ~= 35.6ns when system clock is 168MHz
      * i = 6, 1.7MHz; i = 38, 400kHz;
      */
     for (int i = 0; i < 38; i++)
-        __nop();
-}
-
-void NopCycle(int max)
-{
-    for (int i = 0; i < max; i++)
         __nop();
 }
 
@@ -79,7 +79,7 @@ uint8_t SlaveAck(void)
     uint8_t nack = 0;
 
     SCL_LOW;
-    SET_SDA_INPUT; // set SDA input to get slave ack
+    SET_SDA_INPUT;  // set SDA input to get slave ack
     nop();
 
     SCL_HIGH;
@@ -112,7 +112,7 @@ void MasterAck(void)
 }
 
 /* master nack */
-void MasterNAck()
+void MasterNAck(void)
 {
     SCL_LOW;
     SDA_HIGH;
@@ -155,7 +155,7 @@ void MasterStart(void)
 }
 
 /* write data to IC */
-uint8_t WriteIc(uint8_t DeviceAddr,
+uint8_t write_i2c(uint8_t DeviceAddr,
                 uint8_t RegAddr,
                 uint8_t RegAmount,
                 uint8_t *pData)
@@ -199,7 +199,7 @@ uint8_t WriteIc(uint8_t DeviceAddr,
 }
 
 /* read data from IC */
-uint8_t ReadIc(uint8_t DeviceAddr,
+uint8_t read_i2c(uint8_t DeviceAddr,
                uint8_t RegAddr,
                uint8_t RegAmount,
                uint8_t *pData)
