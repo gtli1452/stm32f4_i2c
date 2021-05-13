@@ -2,19 +2,14 @@
 	#include "stdint.h"
 #endif
 
-
-
-typedef struct
-{
-	uint8_t I2cState;
-	uint8_t DeviceAddress;
-	uint8_t Index;
-	uint32_t RW;
-	uint32_t DataLength;
-	uint32_t DataCounter;
-	uint8_t Data[256];
-	uint8_t caseitem;
-}I2C_transaction_TypeDef;
+typedef struct {
+    uint8_t state;
+    uint8_t device_addr;
+    uint8_t reg_addr;
+    uint32_t RW;
+    uint32_t data_length;
+    uint8_t data[256];
+} I2C_transaction_TypeDef;
 
 extern uint8_t WriteIc(uint8_t DeviceAddress, uint8_t IndexAddress, uint8_t RegisterAmount, uint8_t* pData);
 extern uint8_t ReadIc(uint8_t DeviceAddress, uint8_t IndexAddress, uint8_t RegisterAmount, uint8_t* pData);
@@ -31,8 +26,7 @@ extern uint8_t ReadIc(uint8_t DeviceAddress, uint8_t IndexAddress, uint8_t Regis
 #define I2CONCLR_STAC       (0x1<<5)
 #define I2CONCLR_I2ENC      (0x1<<6)
 
-extern void I2C_IRQHandler( void );
+extern void I2C_IRQHandler(void);
 extern void I2cInitial(void);
-extern uint32_t I2CEngine( void );
-extern volatile I2C_transaction_TypeDef I2C_transaction;
-
+extern uint32_t I2CEngine(void);
+extern volatile I2C_transaction_TypeDef i2c;

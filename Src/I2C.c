@@ -1,7 +1,7 @@
 #include "I2C.h"
 #include "stm32f4xx.h"
 
-volatile I2C_transaction_TypeDef I2C_transaction;
+volatile I2C_transaction_TypeDef i2c;
 volatile uint32_t gHasExeOnce;
 volatile uint32_t gI2cTimeout;
 volatile uint32_t testflag;

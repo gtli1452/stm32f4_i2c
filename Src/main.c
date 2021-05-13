@@ -44,8 +44,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-extern volatile uint32_t gExecution;
-extern volatile uint32_t gUartReceiveCounter;
+volatile uint32_t state_machine;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -67,7 +66,7 @@ uint32_t sysClk;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	uint8_t Echo;
+	static uint8_t echo;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -78,8 +77,8 @@ int main(void)
   /* USER CODE BEGIN Init */
 	UartInitial();
 	InitialTimer7();
-	I2C_transaction.DeviceAddress = (0x48 << 1);
-	gExecution = IDLE;
+	i2c.device_addr = (0x48 << 1);
+	state_machine = IDLE;
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -102,36 +101,36 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		switch(gExecution)
-		{
-			case WRITE_I2C:
-											I2C_transaction.RW = 0;
-											Echo = WriteIc(I2C_transaction.DeviceAddress, I2C_transaction.Index, I2C_transaction.DataLength, (uint8_t*)I2C_transaction.Data);
-											UARTSend(&Echo, 1);	 
-			                gExecution = IDLE;
-											gUartReceiveCounter = 0;			
-											break;
-			case READ_I2C:
-											I2C_transaction.RW = 1;											
-											Echo = ReadIc(I2C_transaction.DeviceAddress, I2C_transaction.Index, I2C_transaction.DataLength, (uint8_t*)I2C_transaction.Data);
-											UARTSend(&Echo, 1);
-											if(Echo==0x00)
-											{
-												UARTSend((uint8_t*)I2C_transaction.Data, I2C_transaction.DataLength);
-											}
-											gExecution = IDLE;
-											gUartReceiveCounter = 0;
-										break;
-											
-			case SET_ADDRESS:
-											Echo = 0;
-											UARTSend(&Echo, 1);
-											gExecution = IDLE;
-											gUartReceiveCounter = 0;
-										break;
-			default:	
-				break;
-		}
+    switch (state_machine) {
+    case WRITE_I2C:
+        i2c.RW = 0;
+        echo = WriteIc(i2c.device_addr, i2c.reg_addr,
+                       i2c.data_length,
+                       (uint8_t *) i2c.data);
+        UARTSend(&echo, 1);
+        state_machine = IDLE;
+        break;
+    case READ_I2C:
+        i2c.RW = 1;
+        echo = ReadIc(i2c.device_addr, i2c.reg_addr,
+                      i2c.data_length,
+                      (uint8_t *) i2c.data);
+        UARTSend(&echo, 1);
+        if (echo == 0x00) {
+            UARTSend((uint8_t *) i2c.data,
+                     i2c.data_length);
+        }
+        state_machine = IDLE;
+        break;
+
+    case SET_ADDRESS:
+        echo = 0;
+        UARTSend(&echo, 1);
+        state_machine = IDLE;
+        break;
+    default:
+        break;
+    }
   }
   /* USER CODE END 3 */
 }
