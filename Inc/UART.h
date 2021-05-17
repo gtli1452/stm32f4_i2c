@@ -10,6 +10,8 @@
 #define SET_I2C_ADDR 1
 #define WRITE_I2C    2
 #define READ_I2C     3
+#define WRITE_SPI    4
+#define READ_SPI     5
 
 void init_uart(void);
 

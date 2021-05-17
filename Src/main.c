@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "i2c.h"
+#include "spi.h"
 #include "timer7.h"
 #include "uart.h"
 /* USER CODE END Includes */
@@ -114,14 +115,23 @@ int main(void)
         echo = read_i2c(i2c.device_addr, i2c.reg_addr, i2c.data_length,
                         (uint8_t *) i2c.data);
         write_uart(&echo, 1);
-        if (echo == 0x00) {
+        if (echo == 0x00)
             write_uart((uint8_t *) i2c.data, i2c.data_length);
-        }
         state_machine = IDLE;
         break;
-
     case SET_I2C_ADDR:
         echo = 0;
+        write_uart(&echo, 1);
+        state_machine = IDLE;
+        break;
+    case WRITE_SPI:
+        //echo = write_spi(sdo);
+        echo = 0;
+        write_uart(&echo, 1);
+        state_machine = IDLE;
+        break;
+    case READ_SPI:
+        //echo = read_spi(sdi);
         write_uart(&echo, 1);
         state_machine = IDLE;
         break;
