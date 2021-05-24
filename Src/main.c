@@ -57,7 +57,7 @@ static void MX_GPIO_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint32_t sysClk;
+
 /* USER CODE END 0 */
 
 /**
@@ -92,7 +92,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
-	sysClk = SystemCoreClock;
+  /* _RST keep high to init ADATE for 20ms */
+  HAL_GPIO_WritePin(GPIOC, _RST_Pin, GPIO_PIN_SET);
+  HAL_Delay(20);
+  ate_hw_reset();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -125,14 +128,16 @@ int main(void)
         state_machine = IDLE;
         break;
     case WRITE_SPI:
-        //echo = write_spi(sdo);
-        echo = 0;
+        echo = write_spi(sdo);
         write_uart(&echo, 1);
         state_machine = IDLE;
         break;
     case READ_SPI:
-        //echo = read_spi(sdi);
+        write_spi(sdo);
+        echo = read_spi(&sdi);    
         write_uart(&echo, 1);
+        if (echo == 0x00)
+            write_uart((uint8_t *)&sdi.spi.data_lo , 2);
         state_machine = IDLE;
         break;
     default:
@@ -202,7 +207,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, _RST_Pin|SCLK_Pin|SDO_Pin|_CS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, _RST_Pin|SDO_Pin|_CS_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(SCLK_GPIO_Port, SCLK_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, SCL_Pin|SDA_Pin, GPIO_PIN_SET);

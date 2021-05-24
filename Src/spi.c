@@ -24,11 +24,11 @@
 #define _BUSY_READ ((GPIOA->IDR & (1 << 1)) == 0 ? 1 : 0)
 
 /* tBUSW for /BUSY minimum SCLK cycle requirements */
-#define tBUSW_REST 744
-#define tBUSW_NOP 3
-#define tBUSW_VALID_ADDR 3
-#define tBUSW_DAC 18
-#define tBUSW_VIL_VIH 21
+#define tBUSW_REST 745
+#define tBUSW_NOP 4
+#define tBUSW_VALID_ADDR 4
+#define tBUSW_DAC 19
+#define tBUSW_VIL_VIH 22
 
 volatile spi_packet_t sdo, sdi;
 
@@ -53,4 +53,76 @@ static void release_busy(uint16_t sclk_cnt)
         nop(0);
     }
     SCLK_LOW;
+}
+
+/* Hardware reset to ADATE320 */
+void ate_hw_reset(void)
+{
+    _RST_ACK;
+    nop(0);
+
+    _RST_IDLE;
+    nop(0);
+    
+    release_busy(tBUSW_REST);
+}
+
+uint8_t write_spi(spi_packet_t sdo)
+{
+    _CS_ACK;
+    nop(0);
+
+    for (int i = 0; i < 26; i++) {
+        SCLK_LOW;
+        nop(0);
+
+        if (sdo.spi_word & 0x02000000)
+            SDO_HIGH;
+        else
+            SDO_LOW;
+        nop(0);
+
+        SCLK_HIGH;
+        nop(0);
+
+        sdo.spi_word <<= 1;
+    }
+
+    SCLK_LOW;
+    nop(0);
+
+    _CS_IDLE;
+
+    release_busy(tBUSW_VALID_ADDR);
+
+    return 0;
+}
+
+uint8_t read_spi(volatile spi_packet_t *sdi)
+{
+    uint32_t tmp = 0;
+    _CS_ACK;
+    nop(0);
+
+    for (int i = 0; i < 26; i++) {
+        SCLK_LOW;
+        nop(0);
+
+        SCLK_HIGH;
+        nop(0);
+
+        if (SDI_READ)
+            tmp += (1 << (25 - i));
+    }
+
+    SCLK_LOW;
+    nop(0);
+
+    _CS_IDLE;
+
+    release_busy(tBUSW_VALID_ADDR);
+    
+    sdi->spi_word = tmp;
+
+    return 0;
 }

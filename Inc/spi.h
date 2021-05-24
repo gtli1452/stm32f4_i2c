@@ -22,8 +22,10 @@ typedef union SPI_PACKET {
 
 extern volatile spi_packet_t sdo, sdi;
 
+void  ate_hw_reset(void);
+
 uint8_t write_spi(spi_packet_t sdo);
 
-uint8_t read_spi(spi_packet_t sdi);
+uint8_t read_spi(volatile spi_packet_t *sdi);
 
 #endif
