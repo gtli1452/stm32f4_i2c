@@ -58,7 +58,7 @@ void USART1_IRQHandler(void)
                 break;
             case CMD_WRITE_SPI:
                 if (rx_count == 1) {
-                    sdo.spi.channel = rx_data;
+                    sdo.spi.channel = rx_data + 1; /* ch0 = b01, ch1 = b10 */
                 } else if (rx_count == 2) {
                     sdo.spi.address = rx_data;
                     sdo.spi.rw = 1;
@@ -71,10 +71,10 @@ void USART1_IRQHandler(void)
                 break;
             case CMD_READ_SPI:
                 if (rx_count == 1) {
-                    sdo.spi.channel = rx_data;
+                    sdo.spi.channel = rx_data + 1; /* ch0 = b01, ch1 = b10 */
                 } else {
-                    sdo.spi.address = (rx_data >> 1);
-                    sdo.spi.rw = (rx_data & 0x01);
+                    sdo.spi.address = rx_data;
+                    sdo.spi.rw = 0;
                     state_machine = READ_SPI;
                 }
                 break;
