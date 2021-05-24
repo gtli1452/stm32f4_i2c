@@ -11,10 +11,12 @@
 #define CMD_WRITE_I2C 'a'
 #define CMD_READ_I2C 'b'
 #define CMD_SET_ADDR 'e'
+#define CMD_SET_IO 'g'
 #define CMD_WRITE_SPI 'j'
 #define CMD_READ_SPI 'k'
 
 extern volatile uint32_t state_machine;
+extern uint8_t pin_select, pin_state;
 
 static volatile uint32_t rx_count;
 static volatile uint8_t ap_cmd;
@@ -76,6 +78,14 @@ void USART1_IRQHandler(void)
                     sdo.spi.address = rx_data;
                     sdo.spi.rw = 0;
                     state_machine = READ_SPI;
+                }
+                break;
+            case CMD_SET_IO:
+                if (rx_count == 1) {
+                    pin_select = rx_data;
+                } else {
+                    pin_state = rx_data;
+                    state_machine = SET_IO;
                 }
                 break;
             default:
