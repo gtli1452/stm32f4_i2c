@@ -55,6 +55,16 @@ static void release_busy(uint16_t sclk_cnt)
     SCLK_LOW;
 }
 
+static void release_busy_pin (uint8_t address)
+{
+    if (address <= 0x0F)
+        release_busy(tBUSW_VIL_VIH);
+    else if (address == 0x12)
+        release_busy(tBUSW_REST);
+    else
+        release_busy(tBUSW_VALID_ADDR);
+}
+
 /* Hardware reset to ADATE320 */
 void ate_hw_reset(void)
 {
@@ -69,6 +79,8 @@ void ate_hw_reset(void)
 
 uint8_t write_spi(spi_packet_t sdo)
 {
+    uint8_t addr = sdo.spi.address;
+    
     _CS_ACK;
     nop(0);
 
@@ -93,7 +105,7 @@ uint8_t write_spi(spi_packet_t sdo)
 
     _CS_IDLE;
 
-    release_busy(tBUSW_VALID_ADDR);
+    release_busy_pin(addr);
 
     return 0;
 }
