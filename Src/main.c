@@ -22,9 +22,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "TIMER7.h"
-#include "UART.h"
-#include "I2C.h"
+#include "i2c.h"
+#include "spi.h"
+#include "timer7.h"
+#include "uart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,7 +57,7 @@ static void MX_GPIO_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint32_t sysClk;
+
 /* USER CODE END 0 */
 
 /**
@@ -75,8 +76,8 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-	UartInitial();
-	InitialTimer7();
+	init_uart();
+	init_timer7();
 	i2c.device_addr = (0x48 << 1);
 	state_machine = IDLE;
   /* USER CODE END Init */
@@ -91,7 +92,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
-	sysClk = SystemCoreClock;
+  /* _RST keep high to init ADATE for 20ms */
+  HAL_GPIO_WritePin(GPIOC, _RST_Pin, GPIO_PIN_SET);
+  HAL_Delay(20);
+  ate_hw_reset();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -104,28 +108,36 @@ int main(void)
     switch (state_machine) {
     case WRITE_I2C:
         i2c.RW = 0;
-        echo = WriteIc(i2c.device_addr, i2c.reg_addr,
-                       i2c.data_length,
-                       (uint8_t *) i2c.data);
-        UARTSend(&echo, 1);
+        echo = write_i2c(i2c.device_addr, i2c.reg_addr, i2c.data_length,
+                         (uint8_t *) i2c.data);
+        write_uart(&echo, 1);
         state_machine = IDLE;
         break;
     case READ_I2C:
         i2c.RW = 1;
-        echo = ReadIc(i2c.device_addr, i2c.reg_addr,
-                      i2c.data_length,
-                      (uint8_t *) i2c.data);
-        UARTSend(&echo, 1);
-        if (echo == 0x00) {
-            UARTSend((uint8_t *) i2c.data,
-                     i2c.data_length);
-        }
+        echo = read_i2c(i2c.device_addr, i2c.reg_addr, i2c.data_length,
+                        (uint8_t *) i2c.data);
+        write_uart(&echo, 1);
+        if (echo == 0x00)
+            write_uart((uint8_t *) i2c.data, i2c.data_length);
         state_machine = IDLE;
         break;
-
-    case SET_ADDRESS:
+    case SET_I2C_ADDR:
         echo = 0;
-        UARTSend(&echo, 1);
+        write_uart(&echo, 1);
+        state_machine = IDLE;
+        break;
+    case WRITE_SPI:
+        echo = write_spi(sdo);
+        write_uart(&echo, 1);
+        state_machine = IDLE;
+        break;
+    case READ_SPI:
+        write_spi(sdo);
+        echo = read_spi(&sdi);    
+        write_uart(&echo, 1);
+        if (echo == 0x00)
+            write_uart((uint8_t *)&sdi.spi.data_lo , 2);
         state_machine = IDLE;
         break;
     default:
@@ -189,12 +201,38 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, _RST_Pin|SDO_Pin|_CS_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(SCLK_GPIO_Port, SCLK_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, SCL_Pin|SDA_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin : SDI_Pin */
+  GPIO_InitStruct.Pin = SDI_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(SDI_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : _RST_Pin SCLK_Pin SDO_Pin _CS_Pin */
+  GPIO_InitStruct.Pin = _RST_Pin|SCLK_Pin|SDO_Pin|_CS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : _BUSY_Pin */
+  GPIO_InitStruct.Pin = _BUSY_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(_BUSY_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SCL_Pin */
   GPIO_InitStruct.Pin = SCL_Pin;
@@ -206,7 +244,7 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin : SDA_Pin */
   GPIO_InitStruct.Pin = SDA_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(SDA_GPIO_Port, &GPIO_InitStruct);
 

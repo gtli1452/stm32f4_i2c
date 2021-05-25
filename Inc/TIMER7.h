@@ -8,9 +8,9 @@
 #define UART_TIMEOUT_MODE      0
 #define I2C_TIMEOUT_MODE       1
 
-void EnableTimer7(uint32_t mode);
-void DisableTimer7(void);
-void ResetTimer7(void);
-void InitialTimer7(void);
+void enable_timer7(uint32_t mode);
+void disable_timer7(void);
+void reset_timer7(void);
+void init_timer7(void);
 
 #endif

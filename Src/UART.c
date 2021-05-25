@@ -1,16 +1,25 @@
-#include "UART.h"
-#include "I2C.h"
-#include "TIMER7.h"
+#include "uart.h"
+#include "i2c.h"
+#include "spi.h"
 #include "stm32f4xx.h"
+#include "timer7.h"
 
 #define rx_data USART1->DR
 #define tx_data USART1->DR
+
+#define CMD_IDLE 0
+#define CMD_WRITE_I2C 'a'
+#define CMD_READ_I2C 'b'
+#define CMD_SET_ADDR 'e'
+#define CMD_WRITE_SPI 'j'
+#define CMD_READ_SPI 'k'
 
 extern volatile uint32_t state_machine;
 
 static volatile uint32_t rx_count;
 static volatile uint8_t ap_cmd;
 
+/* Unpack GUI tranmitted data */
 void USART1_IRQHandler(void)
 {
     /* read interrupt */
@@ -19,10 +28,10 @@ void USART1_IRQHandler(void)
         if (rx_count == 0) {
             ap_cmd = rx_data;
             rx_count++;
-            EnableTimer7(UART_TIMEOUT_MODE);
+            enable_timer7(UART_TIMEOUT_MODE);
         } else {
             switch (ap_cmd) {
-            case 'a':  // write to IC registers
+            case CMD_WRITE_I2C:  // write to IC registers
                 if (rx_count == 1)
                     i2c.reg_addr = rx_data;
                 else if (rx_count == 2)
@@ -33,7 +42,7 @@ void USART1_IRQHandler(void)
                         state_machine = WRITE_I2C;
                 }
                 break;
-            case 'b':  // read the IC internal registers
+            case CMD_READ_I2C:  // read the IC internal registers
                 if (rx_count == 1)
                     i2c.reg_addr = rx_data;
                 else {
@@ -41,10 +50,32 @@ void USART1_IRQHandler(void)
                     state_machine = READ_I2C;
                 }
                 break;
-            case 'e':  // set device address
+            case CMD_SET_ADDR:  // set device address
                 if (rx_count == 1) {
                     i2c.device_addr = rx_data;
-                    state_machine = SET_ADDRESS;
+                    state_machine = SET_I2C_ADDR;
+                }
+                break;
+            case CMD_WRITE_SPI:
+                if (rx_count == 1) {
+                    sdo.spi.channel = rx_data + 1; /* ch0 = b01, ch1 = b10 */
+                } else if (rx_count == 2) {
+                    sdo.spi.address = rx_data;
+                    sdo.spi.rw = 1;
+                } else if (rx_count == 3) {
+                    sdo.spi.data_lo = rx_data;
+                } else {
+                    sdo.spi.data_hi = rx_data;
+                    state_machine = WRITE_SPI;
+                }
+                break;
+            case CMD_READ_SPI:
+                if (rx_count == 1) {
+                    sdo.spi.channel = rx_data + 1; /* ch0 = b01, ch1 = b10 */
+                } else {
+                    sdo.spi.address = rx_data;
+                    sdo.spi.rw = 0;
+                    state_machine = READ_SPI;
                 }
                 break;
             default:
@@ -56,15 +87,14 @@ void USART1_IRQHandler(void)
 
     /* received all data */
     if (state_machine != IDLE) {
-        ap_cmd = 0;
+        ap_cmd = CMD_IDLE;
         rx_count = 0;
-        DisableTimer7();
+        disable_timer7();
     } else {
-
     }
 }
 
-void UartInitial(void)
+void init_uart(void)
 {
     /* Enable GPIOA clock */
     RCC->AHB1ENR |= (1UL << 0);
@@ -103,14 +133,14 @@ void UartInitial(void)
     NVIC_EnableIRQ(USART1_IRQn);
 }
 
-void UARTSend(uint8_t *pBuffer, uint32_t Length)
+void write_uart(uint8_t *pBuffer, uint32_t length)
 {
-    while (Length != 0) {
+    while (length != 0) {
         while (!(USART1->SR & USART_SR_TXE))
             ;
         tx_data = *pBuffer;
         pBuffer++;
-        Length--;
+        length--;
     }
     return;
 }
