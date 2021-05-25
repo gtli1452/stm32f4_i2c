@@ -4,19 +4,19 @@
 /* this handler deals with master read and master write only */
 
 /* PB0 */
-#define SCL_HIGH GPIOB->ODR |= (1 << 0)
-#define SCL_LOW GPIOB->ODR &= ~(1 << 0)
+#define SCL_HIGH GPIOB->ODR |= GPIO_PIN_0
+#define SCL_LOW GPIOB->ODR &= ~GPIO_PIN_0
 
 /* PB1 */
-#define SDA_HIGH GPIOB->ODR |= (1 << 1)
-#define SDA_LOW GPIOB->ODR &= ~(1 << 1)
+#define SDA_HIGH GPIOB->ODR |= GPIO_PIN_1
+#define SDA_LOW GPIOB->ODR &= ~GPIO_PIN_1
 
 /* Configure PB1 input or output */
 #define SET_SDA_INPUT GPIOB->MODER &= ~(3UL << (2 * 1))
 #define SET_SDA_OUTPUT GPIOB->MODER |= (1UL << (2 * 1))
 
 /* Get PB1 input */
-#define SDA GPIOB->IDR & 0x02
+#define SDA GPIOB->IDR & GPIO_PIN_1
 
 volatile i2c_packet_t i2c;
 volatile uint32_t gI2cTimeout;
@@ -86,13 +86,11 @@ uint8_t SlaveAck(void)
     nop();
 
     SCL_LOW;
-    if (SDA) {
-        SDA_HIGH;
+    if (SDA)
         nack = 0x01;
-    } else {
-        SDA_LOW;
+    else
         nack = 0x00;
-    }
+    SDA_HIGH;
     SET_SDA_OUTPUT;
     nop();
 
