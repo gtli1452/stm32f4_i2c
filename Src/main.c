@@ -248,21 +248,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(_BUSY_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : SCL_Pin PB12 PB13 PB14
-                           PB15 */
-  GPIO_InitStruct.Pin = SCL_Pin|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14
-                          |GPIO_PIN_15;
+  /*Configure GPIO pins : SCL_Pin PB12 PB13 PB14 */
+  GPIO_InitStruct.Pin = SCL_Pin|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : SDA_Pin */
-  GPIO_InitStruct.Pin = SDA_Pin;
+  /*Configure GPIO pins : SDA_Pin PB15 */
+  GPIO_InitStruct.Pin = SDA_Pin|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  HAL_GPIO_Init(SDA_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 }
 

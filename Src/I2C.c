@@ -7,16 +7,16 @@
 #define SCL_HIGH GPIOB->ODR |= GPIO_PIN_0
 #define SCL_LOW GPIOB->ODR &= ~GPIO_PIN_0
 
-/* PB1 */
-#define SDA_HIGH GPIOB->ODR |= GPIO_PIN_1
-#define SDA_LOW GPIOB->ODR &= ~GPIO_PIN_1
+/* PB15 */
+#define SDA_HIGH GPIOB->ODR |= GPIO_PIN_15
+#define SDA_LOW GPIOB->ODR &= ~GPIO_PIN_15
 
-/* Configure PB1 input or output */
-#define SET_SDA_INPUT GPIOB->MODER &= ~(3UL << (2 * 1))
-#define SET_SDA_OUTPUT GPIOB->MODER |= (1UL << (2 * 1))
+/* Configure PB15 input or output */
+#define SET_SDA_INPUT GPIOB->MODER &= ~(3UL << (2 * 15))
+#define SET_SDA_OUTPUT GPIOB->MODER |= (1UL << (2 * 15))
 
-/* Get PB1 input */
-#define SDA GPIOB->IDR & GPIO_PIN_1
+/* Get PB15 input */
+#define SDA GPIOB->IDR & GPIO_PIN_15
 
 volatile i2c_packet_t i2c;
 volatile uint32_t gI2cTimeout;
