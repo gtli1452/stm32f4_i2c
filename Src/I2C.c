@@ -24,11 +24,11 @@ volatile uint32_t gI2cTimeout;
 static void nop(void)
 {
     /*
-     * __nop() ~= 35.6ns when system clock is 168MHz
+     * __asm("NOP") ~= 35.6ns when system clock is 168MHz
      * i = 6, 1.7MHz; i = 38, 400kHz;
      */
     for (int i = 0; i < 38; i++)
-        __nop();
+        __asm("NOP");
 }
 
 /* SM transmit byte */

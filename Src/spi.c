@@ -36,7 +36,7 @@ volatile spi_packet_t sdo, sdi;
 static void nop(uint16_t cnt)
 {
     for (int i = 0; i < cnt; i++)
-        __nop();
+        __asm("NOP");
 }
 
 /*
@@ -73,14 +73,14 @@ void ate_hw_reset(void)
 
     _RST_IDLE;
     nop(0);
-    
+
     release_busy(tBUSW_REST);
 }
 
 uint8_t write_spi(spi_packet_t sdo)
 {
     uint8_t addr = sdo.spi.address;
-    
+
     _CS_ACK;
     nop(0);
 
@@ -133,7 +133,7 @@ uint8_t read_spi(volatile spi_packet_t *sdi)
     _CS_IDLE;
 
     release_busy(tBUSW_VALID_ADDR);
-    
+
     sdi->spi_word = tmp;
 
     return 0;
