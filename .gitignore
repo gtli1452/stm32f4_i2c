@@ -5,22 +5,31 @@
 # *.SRC # generate source file
 # *.src
 
-# ignore Log directory of STM32CubeMX driver
-Drivers*/
-MDK-ARM*/
-*.mxproject
+# Log
 *.log
-*.ioc
+*.log.*
+JLinkLog.txt
 
 # Prerequisites
 *.d
 *.dep
-# Object files
+
+# Object and HEX files
 *.o
 *.obj
 *.OBJ
+*.axf
+*.b[0-3][0-9]
+*.hex
+*.d
+*.crf
+*.elf
+*.hex
+*.h86
+*.lib
 
 # Listing Files
+*.htm
 *.COD
 *.cod
 *.[Ii]
@@ -40,19 +49,55 @@ MDK-ARM*/
 *.lib
 *.LIB
 
-
 # uv output
 *.lnp
 *.build_log.htm
 *.HEX
 *.hex
 
-
 # Build Files
 *._IA
 *.__[Ii]
 *._[Ii][Ii]
 
-# project
+# Project files
 *.uvgui.*
 *.uvguix.*
+*.scvd
+*.dbgconf
+
+# Generated output files
+/Listings/*
+/Objects/*
+/Build/*
+
+# Debugger files
+# define exception below if needed
+*.ini
+
+# Other files
+*.build_log.htm
+*.cdb
+*.dep
+*.ic
+*.lin
+*.lnp
+*.orc
+# define exception below if needed
+*.pack
+# define exception below if needed
+*.pdsc
+*.plg
+# define exception below if needed
+*.sct
+*.sfd
+*.sfr
+
+
+# Miscellaneous
+*.tra
+*.bin
+*.fed
+*.l1p
+*.l2p
+*.iex
