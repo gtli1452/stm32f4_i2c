@@ -130,16 +130,37 @@ int main(void)
         state_machine = IDLE;
         break;
     case WRITE_SPI:
+        /*
+         * ADATE320 SPI word definition
+         *   26   25   24  ...  17    16   15   ...  0
+         *  ---- ---- ----     ----  ---- -----     ----
+         * | C1 | C0 | A6 |...| A0 | R/W | D15 |...| D0 |
+         *  ---- ---- ----     ----  ---- -----     ----
+         * spi_word[25:24] = channel
+         * spi_word[23:17] = address
+         * spi_word[16]    = read/write
+         * spi_word[15:0]  = data
+         */
         echo = write_spi(sdo);
         write_uart(&echo, 1);
         state_machine = IDLE;
         break;
     case READ_SPI:
-        write_spi(sdo);
-        echo = read_spi(&sdi);    
+        /*
+         * There are two steps to read SPI, Read request and Readout instructions.
+         *
+         * In SPI read request instruction:
+         * Set channel, address, read bit; Data is don't care
+         *
+         * In SPI readout instruction:
+         * Set address to NOP register(0x00); Channel, read bit, data are don't care
+         */
+        write_spi(sdo);         /* Read request */
+        sdi.spi.address = 0x00; /* Set NOP address */
+        echo = read_spi(&sdi);  /* Readout */
         write_uart(&echo, 1);
         if (echo == 0x00)
-            write_uart((uint8_t *)&sdi.spi.data_lo , 2);
+            write_uart((uint8_t *)&sdi.spi.data_lo, 2);
         state_machine = IDLE;
         break;
     case SET_IO:

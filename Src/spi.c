@@ -120,11 +120,19 @@ uint8_t read_spi(volatile spi_packet_t *sdi)
         SCLK_LOW;
         nop(0);
 
+        if (sdi->spi_word & 0x02000000)
+            SDO_HIGH;
+        else
+            SDO_LOW;
+        nop(0);
+
         SCLK_HIGH;
         nop(0);
 
         if (SDI_READ)
             tmp += (1 << (25 - i));
+
+        sdi->spi_word <<= 1;
     }
 
     SCLK_LOW;
