@@ -65,9 +65,9 @@ void USART1_IRQHandler(void)
                     sdo.spi.address = rx_data;
                     sdo.spi.rw = 1;
                 } else if (rx_count == 3) {
-                    sdo.spi.data_lo = rx_data;
-                } else {
                     sdo.spi.data_hi = rx_data;
+                } else {
+                    sdo.spi.data_lo = rx_data;
                     state_machine = WRITE_SPI;
                 }
                 break;
