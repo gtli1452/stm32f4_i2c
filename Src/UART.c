@@ -137,7 +137,7 @@ void init_uart(void)
                     USART_CR1_RE |         // Receiver enable
                     USART_CR1_RXNEIE);
 
-    USART1->BRR = 0x2D9;  // baurd rate : 115200 CLK = 84Mhz
+    USART1->BRR = 0x2D9;  // baud rate : 115200 CLK = 84Mhz
 
     USART1->CR1 |= USART_CR1_UE;  // USART enable
     NVIC_EnableIRQ(USART1_IRQn);
