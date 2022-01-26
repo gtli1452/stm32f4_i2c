@@ -21,13 +21,13 @@
 volatile i2c_packet_t i2c;
 volatile uint32_t gI2cTimeout;
 
-static void nop(void)
+static inline void half_period(void)
 {
     /*
      * __asm("NOP") ~= 35.6ns when system clock is 168MHz
-     * i = 6, 1.7MHz; i = 38, 400kHz;
+     * i = 6, 1.7MHz; i = 36, 400kHz; i = 155, 100kHz;
      */
-    for (int i = 0; i < 38; i++)
+    for (int i = 0; i < 155; i++)
         __asm("NOP");
 }
 
@@ -42,10 +42,10 @@ void I2cTxByte(uint8_t I2cTxByte)
             SDA_HIGH;
         else
             SDA_LOW;
-        nop();
+        half_period();
 
         SCL_HIGH;
-        nop();
+        half_period();
 
         tmp = tmp << 1;
     }
@@ -58,16 +58,16 @@ uint8_t I2cRxByte(void)
 
     SCL_LOW;
     SET_SDA_INPUT;  // set SDA input to get data
-    nop();
+    half_period();
 
     for (int i = 7; i >= 0; i--) {
         SCL_LOW;
-        nop();
+        half_period();
 
         SCL_HIGH;
         if (SDA) /* get bit */
             bI2cRxByte = bI2cRxByte | (1 << i);
-        nop();
+        half_period();
     }
 
     return bI2cRxByte;
@@ -80,10 +80,10 @@ uint8_t SlaveAck(void)
 
     SCL_LOW;
     SET_SDA_INPUT;  // set SDA input to get slave ack
-    nop();
+    half_period();
 
     SCL_HIGH;
-    nop();
+    half_period();
 
     SCL_LOW;
     if (SDA)
@@ -92,7 +92,7 @@ uint8_t SlaveAck(void)
         nack = 0x00;
     SDA_HIGH;
     SET_SDA_OUTPUT;
-    nop();
+    half_period();
 
     return nack;
 }
@@ -103,10 +103,10 @@ void MasterAck(void)
     SCL_LOW;
     SDA_LOW;
     SET_SDA_OUTPUT;
-    nop();
+    half_period();
 
     SCL_HIGH;
-    nop();
+    half_period();
 }
 
 /* master nack */
@@ -115,23 +115,23 @@ void MasterNAck(void)
     SCL_LOW;
     SDA_HIGH;
     SET_SDA_OUTPUT;
-    nop();
+    half_period();
 
     SCL_HIGH;
-    nop();
+    half_period();
 }
 
 /* master stop */
 void MasterStop(void)
 {
     SCL_LOW;
-    nop();
+    half_period();
 
     SDA_LOW;
-    nop();
+    half_period();
 
     SCL_HIGH;
-    nop();
+    half_period();
 
     SDA_HIGH;
 }
@@ -140,16 +140,16 @@ void MasterStop(void)
 void MasterStart(void)
 {
     SDA_HIGH;
-    nop();
+    half_period();
 
     SCL_HIGH;
-    nop();
+    half_period();
 
     SDA_LOW;
-    nop();
+    half_period();
 
     SCL_LOW;
-    nop();
+    half_period();
 }
 
 /* write data to IC */
