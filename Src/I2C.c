@@ -37,11 +37,13 @@ void I2cTxByte(uint8_t I2cTxByte)
     uint8_t tmp = I2cTxByte;
 
     for (int i = 0; i < 8; i++) {
-        SCL_LOW;
-        if ((tmp & 0x80) == 0x80)
+        if ((tmp & 0x80) == 0x80) {
+            SCL_LOW;
             SDA_HIGH;
-        else
+        } else {
+            SCL_LOW;
             SDA_LOW;
+        }
         half_period();
 
         SCL_HIGH;
