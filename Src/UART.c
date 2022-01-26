@@ -20,6 +20,7 @@ extern uint8_t pin_select, pin_state;
 
 static volatile uint32_t rx_count;
 static volatile uint8_t ap_cmd;
+static volatile uint8_t *i2c_buf;
 
 /* Unpack GUI tranmitted data */
 void USART1_IRQHandler(void)
@@ -37,18 +38,25 @@ void USART1_IRQHandler(void)
                 if (rx_count == 1)
                     i2c.reg_addr = rx_data;
                 else if (rx_count == 2)
-                    i2c.data_length = rx_data;
-                else {
-                    i2c.data[rx_count - 3] = rx_data;
-                    if (rx_count == (i2c.data_length + 2))
+                    i2c.data_length = (rx_data << 8);  // high byte
+                else if (rx_count == 3) {
+                    i2c.data_length += rx_data;  // low byte
+                    i2c_buf = i2c.data;
+                    if (i2c.data_length == 0)
+                        state_machine = WRITE_I2C;
+                } else {
+                    *i2c_buf++ = rx_data;
+                    if (rx_count == (i2c.data_length + 3))
                         state_machine = WRITE_I2C;
                 }
                 break;
             case CMD_READ_I2C:  // read the IC internal registers
                 if (rx_count == 1)
                     i2c.reg_addr = rx_data;
+                else if (rx_count == 2)
+                    i2c.data_length = (rx_data << 8);  // high byte
                 else {
-                    i2c.data_length = rx_data;
+                    i2c.data_length += rx_data;
                     state_machine = READ_I2C;
                 }
                 break;
