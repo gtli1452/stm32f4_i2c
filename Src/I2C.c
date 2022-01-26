@@ -16,7 +16,7 @@
 #define SET_SDA_OUTPUT GPIOB->MODER |= (1UL << (2 * 15))
 
 /* Get PB15 input */
-#define SDA GPIOB->IDR & GPIO_PIN_15
+#define SDA GPIOB->IDR &GPIO_PIN_15
 
 volatile i2c_packet_t i2c;
 volatile uint32_t gI2cTimeout;
@@ -154,14 +154,14 @@ void MasterStart(void)
 
 /* write data to IC */
 uint8_t write_i2c(uint8_t DeviceAddr,
-                uint8_t RegAddr,
-                uint8_t RegAmount,
-                uint8_t *pData)
+                  uint8_t RegAddr,
+                  uint8_t RegAmount,
+                  uint8_t *pData)
 {
     /* Master write register address*/
     MasterStart();
 
-    I2cTxByte(DeviceAddr);
+    I2cTxByte(DeviceAddr << 1);
     if (SlaveAck()) {
         MasterStop();  // Slave NACK, master stop
         return 0x01;
@@ -198,14 +198,14 @@ uint8_t write_i2c(uint8_t DeviceAddr,
 
 /* read data from IC */
 uint8_t read_i2c(uint8_t DeviceAddr,
-               uint8_t RegAddr,
-               uint8_t RegAmount,
-               uint8_t *pData)
+                 uint8_t RegAddr,
+                 uint8_t RegAmount,
+                 uint8_t *pData)
 {
     /* Master write register address*/
     MasterStart();
 
-    I2cTxByte(DeviceAddr);
+    I2cTxByte(DeviceAddr << 1);
     if (SlaveAck()) {
         MasterStop();
         return 0x01;
@@ -220,7 +220,7 @@ uint8_t read_i2c(uint8_t DeviceAddr,
     /* Master read register data*/
     MasterStart();
 
-    I2cTxByte(DeviceAddr | 0x01);
+    I2cTxByte((DeviceAddr << 1) | 0x01);
     if (SlaveAck()) {
         MasterStop();
         return 0x01;

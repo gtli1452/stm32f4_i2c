@@ -80,7 +80,7 @@ int main(void)
   /* USER CODE BEGIN Init */
 	init_uart();
 	init_timer7();
-	i2c.device_addr = (0x48 << 1);
+	i2c.device_addr = 0x48;
 	state_machine = IDLE;
   /* USER CODE END Init */
 
