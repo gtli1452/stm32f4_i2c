@@ -31,6 +31,18 @@ static inline void half_period(void)
         __asm("NOP");
 }
 
+static inline void repeat_start_set_time(void)
+{
+    for (int i = 0; i < 120; i++)
+        __asm("NOP");
+}
+
+static inline void repeat_start_hold_time(void)
+{
+    for (int i = 0; i < 120; i++)
+        __asm("NOP");
+}
+
 /* SM transmit byte */
 void I2cTxByte(uint8_t I2cTxByte)
 {
@@ -145,10 +157,10 @@ void MasterStart(void)
     half_period();
 
     SCL_HIGH;
-    half_period();
+    repeat_start_set_time();
 
     SDA_LOW;
-    half_period();
+    repeat_start_hold_time();
 
     SCL_LOW;
     half_period();
