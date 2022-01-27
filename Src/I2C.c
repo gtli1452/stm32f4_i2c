@@ -59,23 +59,35 @@ static inline void stop_set_time(void)
         __asm("NOP");
 }
 
+static inline void nop_test(int cnt)
+{
+    for (int i = 0; i < cnt; i++)
+        __asm("NOP");
+}
+
 /* SM transmit byte */
+uint8_t spike = 0;
 void I2cTxByte(uint8_t I2cTxByte)
 {
     uint8_t tmp = I2cTxByte;
 
     for (int i = 0; i < 8; i++) {
-        if (tmp & 0x80) {
-            SCL_LOW;
+        SCL_LOW;
+        if (tmp & 0x80)
             SDA_HIGH;
-        } else {
-            SCL_LOW;
+        else
             SDA_LOW;
-        }
         half_period();
 
         SCL_HIGH;
-        half_period();
+        if (!spike && i == 2) {
+            nop_test(18);
+            SDA_HIGH;
+            SDA_LOW;
+            nop_test(18);
+            spike = 1;
+        } else
+            half_period();
 
         tmp = tmp << 1;
     }
