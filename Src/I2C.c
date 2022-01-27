@@ -80,14 +80,14 @@ void I2cTxByte(uint8_t I2cTxByte)
         half_period();
 
         SCL_HIGH;
-        if (!spike && i == 2) {
+        if (i == 6) {
             nop_test(18);
-            SDA_HIGH;
-            SDA_LOW;
+            SCL_LOW;
+            SCL_HIGH;
             nop_test(18);
-            spike = 1;
-        } else
+        } else {
             half_period();
+        }
 
         tmp = tmp << 1;
     }
