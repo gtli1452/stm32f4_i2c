@@ -18,6 +18,11 @@
 /* Get PB15 input */
 #define SDA GPIOB->IDR &GPIO_PIN_15
 
+#define I2C_400K_HALF_PERIOD_CNT 155
+#define START_SET_TIME_CNT_400K 120
+#define START_HOLD_TIME_CNT_400K 120
+#define STOP_SET_TIME_CNT_400K 30
+
 volatile i2c_packet_t i2c;
 volatile uint32_t gI2cTimeout;
 
@@ -27,19 +32,25 @@ static inline void half_period(void)
      * __asm("NOP") ~= 35.6ns when system clock is 168MHz
      * i = 6, 1.7MHz; i = 36, 400kHz; i = 155, 100kHz;
      */
-    for (int i = 0; i < 155; i++)
+    for (int i = 0; i < I2C_400K_HALF_PERIOD_CNT; i++)
         __asm("NOP");
 }
 
 static inline void repeat_start_set_time(void)
 {
-    for (int i = 0; i < 120; i++)
+    for (int i = 0; i < START_SET_TIME_CNT_400K; i++)
         __asm("NOP");
 }
 
 static inline void repeat_start_hold_time(void)
 {
-    for (int i = 0; i < 120; i++)
+    for (int i = 0; i < START_HOLD_TIME_CNT_400K; i++)
+        __asm("NOP");
+}
+
+static inline void stop_set_time(void)
+{
+    for (int i = 0; i < STOP_SET_TIME_CNT_400K; i++)
         __asm("NOP");
 }
 
@@ -49,7 +60,7 @@ void I2cTxByte(uint8_t I2cTxByte)
     uint8_t tmp = I2cTxByte;
 
     for (int i = 0; i < 8; i++) {
-        if ((tmp & 0x80) == 0x80) {
+        if (tmp & 0x80) {
             SCL_LOW;
             SDA_HIGH;
         } else {
@@ -145,7 +156,7 @@ void MasterStop(void)
     half_period();
 
     SCL_HIGH;
-    half_period();
+    stop_set_time();
 
     SDA_HIGH;
 }
