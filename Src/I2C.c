@@ -65,15 +65,18 @@ void I2cTxByte(uint8_t I2cTxByte)
     uint8_t tmp = I2cTxByte;
 
     for (int i = 0; i < 8; i++) {
+        GPIOB->OTYPER &= ~GPIO_PIN_15;  // set pb15 to push-pull
         if (tmp & 0x80) {
-            SCL_LOW;
-            SDA_HIGH;
+            GPIOB->ODR &= GPIO_PIN_15;  // clear all bits except pb15
+            __asm("NOP");
+            GPIOB->ODR = GPIO_PIN_15;  // set pb15 and clear ohter bits
         } else {
-            SCL_LOW;
-            SDA_LOW;
+            GPIOB->ODR &= GPIO_PIN_15;  // clear all bits except pb15
+            __asm("NOP");
+            GPIOB->ODR = 0;  // clear all bits
         }
         half_period();
-
+        GPIOB->OTYPER |= GPIO_PIN_15;  // set pb15 to open-drain
         SCL_HIGH;
         half_period();
 
